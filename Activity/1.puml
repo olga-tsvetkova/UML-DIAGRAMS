@@ -1,0 +1,43 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+@startuml
+|Контроль Кредитных историй (ККИ)|
+start
+:Запуск процесса загрузки данных из АБС;
+
+
+|АБС 1|
+fork
+:Выгрузка данных;
+if (Ошибка выгрузки?) then (<color:green>нет)
+  -[#green]->
+else (<color:red >да)
+  -[#red]->
+   #pink :Письмо об ошибке;
+    end
+endif
+#palegreen :Копирование данных в БД ККИ;
+
+|АБС 2|
+fork again
+:Выгрузка данных;
+if (Ошибка выгрузки?) then (<color:green>нет)
+  -[#green]->
+else (<color:red >да)
+  -[#red]->
+   #pink :Письмо об ошибке;
+    end
+endif
+#palegreen :Копирование данных в БД ККИ;
+end fork
+
+|Контроль Кредитных историй (ККИ)|
+:Запуск процесса контроля качества данных;
+if (Есть ошибки в данных?)  then (<color:red>да)
+  -[#red]->
+  :Запуск процедуры исправления ошибок;
+else (<color:green>нет)
+  -[#green]->
+endif
+stop
+@enduml
