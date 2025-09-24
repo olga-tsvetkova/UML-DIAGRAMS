@@ -1,0 +1,21 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+@startuml
+actor Customer                 as C
+participant "Web UI"           as WUI
+participant "Order Controller" as OC
+participant "Payment Service"  as PS
+database "База данных"         as DB
+
+C -> WUI    : initiateOrder(OrderDetail)
+WUI -> OC   : processedOrder(OrderDetail)
+OC  -> DB   : saveOrder(OrderDetail)
+DB  --> OC  : orderSaved
+OC  -> PS   : processedPayment(paymentInfo)
+PS  --> OC  : PaymentResult
+OC  ->  WUI : orderConfirmation(confirmationDetails)
+WUI --> C   : displayConfirmation(confirmationDetails)
+
+
+@enduml

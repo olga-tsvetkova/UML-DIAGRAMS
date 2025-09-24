@@ -1,0 +1,74 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam actor {
+BackgroundColor #95C8D8
+BorderColor Black
+}
+skinparam participant {
+BackgroundColor #F0F0F0
+BorderColor Green
+}
+skinparam database {
+BackgroundColor #FFD700
+BorderColor Black
+}
+skinparam sequenceMessageAlign left
+
+actor Customer                 as C
+participant "Web UI"           as WUI
+participant "Order Controller" as OC
+participant "Payment Service"  as PS
+database    "База данных"      as DB
+participant "Notification Service" as NS
+
+activate C
+group "1.Оформление заказа"
+C -> WUI    : initiateOrder(OrderDetail)
+activate WUI
+WUI -> OC   : processedOrder(OrderDetail)
+activate OC
+OC  -> DB   : saveOrder(OrderDetail)
+note right : Сохранен заказ в статусе "Ожидание оплаты"
+activate DB
+DB -[#green]--> OC  : orderSaved
+deactivate DB
+end
+
+group "2.Оплата заказа"
+OC  -> PS   : processedPayment(paymentInfo)
+activate PS
+ alt Успешная оплата
+   PS -[#green]--> OC  : processPayment(paymentConfirmation)
+   OC -[#lightblue]--> NS : senOrderNotification (orderId)
+
+ else Ошибка оплаты
+   PS -[#red]--> OC : paymentFailure(errorMessage)
+
+   note right :Заказ сохраняется как "предварительный"
+
+ deactivate PS
+ end
+
+end
+group "3.Подтверждение заказа"
+ OC  ->  WUI : orderConfirmation(confirmationDetails)
+ WUI --> C   : displayConfirmation(confirmationDetails)
+end
+
+group "4.Изменение корзины "
+C -> WUI    : modifyCart(action, itemDetails)
+note right  : Действие может быть: добавление, удаление, изменение кол-ва
+WUI -> OC   : updateCart(action, itemDetails)
+OC -> DB    : updateCartInDB(cartData)
+DB -[#green]--> OC :cartUpdateConfirmation
+OC -> WUI   : modifyCartUpdate(cartStatus)
+end
+
+group "5.Уведомление менеджера"
+NS -> WUI   : managerNotification(orderId,status)
+note right  : Менеджер получает уведомление о новом заказе
+end
+
+
+
+@enduml

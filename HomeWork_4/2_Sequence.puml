@@ -1,0 +1,56 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+skinparam actor {
+BackgroundColor #95C8D8
+BorderColor Black
+}
+skinparam participant {
+BackgroundColor #F0F0F0
+BorderColor Green
+}
+skinparam database {
+BackgroundColor #FFD700
+BorderColor Black
+}
+skinparam sequenceMessageAlign left
+
+actor Customer                 as C
+participant "Web UI"           as WUI
+participant "Order Controller" as OC
+participant "Payment Service"  as PS
+database    "База данных"      as DB
+participant "Notification Service" as NS
+
+activate C
+group "1.Оформление заказа"
+C -> WUI    : initiateOrder(OrderDetail)
+activate WUI
+WUI -> OC   : processedOrder(OrderDetail)
+activate OC
+OC  -> DB   : saveOrder(OrderDetail)
+activate DB
+DB -[#green]--> OC  : orderSaved
+deactivate DB
+end
+
+group "2.Оплата заказа"
+OC  -> PS   : processedPayment(paymentInfo)
+activate PS
+alt Успешная оплата
+   PS -[#green]--> OC  : processPayment(paymentConfirmation)
+   OC -[#lightblue]--> NS : senOrderNotification (orderId)
+
+else Ошибка оплаты
+   PS -[#red]--> OC : paymentFailure(errorMessage)
+deactivate PS
+end
+end
+
+group "3.Подтверждение оплаты"
+ OC  ->  WUI : orderConfirmation(confirmationDetails)
+ WUI --> C   : displayConfirmation(confirmationDetails)
+ 
+end
+
+@enduml
+
